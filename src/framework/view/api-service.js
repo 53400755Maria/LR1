@@ -1,29 +1,33 @@
-import { createElement } from "../render.js";
+export default class ApiService {
+  constructor(endPoint) {
+    this._endPoint = endPoint;
+  }
 
-export class AbstractComponent {
-  #element = null;
-  _callback = {};
-
-  constructor() {
-    if (new.target === AbstractComponent) {
-      throw new Error(
-        "Can't instantiate AbstractComponent, only concrete one."
-      );
+  async _load({ url, method = "GET", body = null, headers = new Headers() }) {
+    const response = await fetch(`${this._endPoint}/${url}`, {
+      method,
+      body,
+      headers,
+    });
+    try {
+      ApiService.checkStatus(response);
+      return response;
+    } catch (err) {
+      ApiService.catchError(err);
     }
   }
 
-  get element() {
-    if (!this.#element) {
-      this.#element = createElement(this.template);
+  static parseResponse(response) {
+    return response.json();
+  }
+
+  static checkStatus(response) {
+    if (!response.ok) {
+      throw new Error(`${response.status}: ${response.statusText}`);
     }
-
-    return this.#element;
-  }
-  get template() {
-    throw new Error("Abstract method not implemented: get template");
   }
 
-  removeElement() {
-    this.#element = null;
+  static catchError(err) {
+    throw err;
   }
 }
